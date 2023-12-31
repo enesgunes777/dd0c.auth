@@ -1,0 +1,82 @@
+---
+
+- name: Add list 'ansibleusers' with a bash shell, appending the group 'sudo'
+  ansible.builtin.user:
+    name: "{{ ansibleusers }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+
+- name: Set password for user in list 'ansibleusers'
+  ansible.builtin.user:
+    name: "{{ ansibleusers }}"
+    update_password: always
+    password: "{{ '{{ ansibleusers }}'_passwd|password_hash('sha512') }}"
+
+#- name: Create home directory for user 'ansible'
+#  ansible.builtin.file:
+#    path: /home/ansible
+#    owner: ansible
+#    group: ansible
+#    mode: '0700'
+#    state: directory
+
+#- name: Create .ssh directory for user 'ansible'
+#  ansible.builtin.file:
+#    path: /home/ansible/.ssh
+#    owner: ansible
+#    group: ansible
+#    mode: '0700'
+#    state: directory
+
+#- name: Generate an OpenSSH keypair for user 'ansible' with the default values (521 bits, ed25519)
+#  community.crypto.openssh_keypair:
+#    path: ~ansible/.ssh/id_ed25519
+#    type: ed25519
+
+#- name: Make sure public keys are set present at user 'ansible'
+#  ansible.posix.authorized_key:
+#    user: ansible
+#    state: present
+#    key: "{{ pubkey_item }}"
+#  with_file:
+#    - public_keys/tycho_apollo-id_ed25519.pub
+#    - public_keys/tycho_freya-id_ed25519.pub
+#  loop_control:
+#    loop_var: pubkey_item
+
+#- name: Generate an OpenSSH keypair for user 'root' with the default values (521 bits, ed25519)
+#  community.crypto.openssh_keypair:
+#    path: ~/.ssh/id_ed25519
+#    type: ed25519
+
+#- name: Make sure public keys are set present at user 'root'
+#  ansible.posix.authorized_key:
+#    user: root
+#    state: present
+#    key: "{{ pubkey_item }}"
+#  with_file:
+#    - public_keys/tycho_apollo-id_ed25519.pub
+#    - public_keys/tycho_freya-id_ed25519.pub
+#  loop_control:
+#    loop_var: pubkey_item
+
+#- name: Set password for user 'root'
+#  ansible.builtin.user:
+#    name: root
+#    update_password: always
+#    password: "{{ heimdall_rootpwd|password_hash('sha512') }}"
+
+#- name: Ensure root ssh login is not possible
+#  ansible.builtin.lineinfile:
+#    path: /etc/ssh/sshd_config
+#    regexp: 'PermitRootLogin without-password'
+#    line: PermitRootLogin no
+
+#- name: Ensure ssh login with key is possible
+#  ansible.builtin.lineinfile:
+#    path: /etc/ssh/sshd_config
+#    regexp: '^#PubkeyAuthentication'
+#    line: PubkeyAuthentication yes
+
+...
