@@ -1,50 +1,54 @@
 ---
 
-- name: Add list 'anibleusers' with a bash shell, appending the group 'wheel'
+- name: Add user 'ansible' with a bash shell, appending the group 'wheel'
   ansible.builtin.user:
-    name: "{{ ansibleusers }}"
-    shell: /bin/bash
-    groups: wheel
+    name: "ansible"
+    shell: "/bin/bash"
+    groups: "wheel"
     append: yes
-
-- name: Set password for user in list 'ansibleusers'
-  ansible.builtin.user:
-    name: "{{ ansibleusers }}"
     update_password: always
-    password: "{{ '{{ ansibleusers }}'_passwd|password_hash('sha512') }}"
+    password: "{{ ansiblepwd|password_hash('sha512') }}"
 
-#- name: Generate an OpenSSH keypair for user 'ansible' with the default values (521 bits, ed25519)
-#  community.crypto.openssh_keypair:
-#    path: ~ansible/.ssh/id_ed25519
-#    type: ed25519
+- name: Generate an OpenSSH keypair for user 'ansible' with the default values (521 bits, ed25519)
+  community.crypto.openssh_keypair:
+    path: ~ansible/.ssh/id_ed25519
+    type: ed25519
 
-#- name: Generate an OpenSSH keypair for user 'root' with the default values (521 bits, ed25519)
-#  community.crypto.openssh_keypair:
-#    path: ~/.ssh/id_ed25519
-#    type: ed25519
+- name: Update permissions for '/home/ansible/.ssh/' directory
+  ansible.builtin.file:
+    path: ~ansible/.ssh/
+    state: directory
+    recurse: yes
+    owner: ansible
+    group: ansible
 
-#- name: Make sure public keys are set present at user 'root'
-#  ansible.posix.authorized_key:
-#    user: root
-#    state: present
-#    key: "{{ pubkey_item }}"
-#  with_file:
-#    - public_keys/root_heimdall-id_rsa.pub
-#    - public_keys/tycho_apollo-id_ed25519.pub
-#  loop_control:
-#    loop_var: pubkey_item
+- name: Generate an OpenSSH keypair for user 'root' with the default values (521 bits, ed25519)
+  community.crypto.openssh_keypair:
+    path: ~/.ssh/id_ed25519
+    type: ed25519
 
-#- name: Ensure root ssh login is not possible
-#  ansible.builtin.lineinfile:
-#    path: /etc/selinux/config
-#    regexp: '^#PermitRootLogin'
-#    line: PermitRootLogin no
+- name: Make sure public keys are set present at user 'root'
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ pubkey_item }}"
+  with_file:
+    - public_keys/root_heimdall-id_rsa.pub
+    - public_keys/tycho_apollo-id_ed25519.pub
+  loop_control:
+    loop_var: pubkey_item
 
-#- name: Ensure ssh login with key is possible
-#  ansible.builtin.lineinfile:
-#    path: /etc/selinux/config
-#    regexp: '^#PubkeyAuthentication'
-#    line: PubkeyAuthentication yes
+- name: Ensure root ssh login is not possible
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^#PermitRootLogin'
+    line: PermitRootLogin no
+
+- name: Ensure ssh login with key is possible
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^#PubkeyAuthentication'
+    line: PubkeyAuthentication yes
 
 #- name: Set password for user 'root'
 #  ansible.builtin.user:
