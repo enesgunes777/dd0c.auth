@@ -33,21 +33,32 @@
     - public_keys/apollo-tycho-id_ed25519.pub 
     - public_keys/freya-tycho-id_ed25519.pub
     - public_keys/M2729-doctert-id_rsa.pub
+    - public_keys/heimdall-ansible-id_ed25519.pub
   loop_control:
     loop_var: pubkey_item
 
-- name: Create and/or recursively change ownership of a directory of root's .ssh directory
-  ansible.builtin.file:
-    path: ~/.ssh
-    state: directory
-    recurse: yes
-    owner: root
-    group: root
+- name: Check if user ansible is already defined in sudoers
+  lineinfile:
+    state: absent
+    path: "/etc/sudoers"
+    regexp: "^ansible"
+  check_mode: true
+  changed_when: false # This just makes things look prettier in the logs
+  register: check_ansible_sudoers
+
+- name: Define sudoers line for user ansible if undefined
+  lineinfile:
+    state: present
+    path: "/etc/sudoers"
+    line: "ansible ALL=(ALL) NOPASSWD: ALL"
+  when: check_ansible_sudoers.found == 0
 
 - name: Generate an OpenSSH keypair for user 'root' with the default values (521 bits, ed25519)
   community.crypto.openssh_keypair:
     path: ~/.ssh/id_ed25519
     type: ed25519
+    owner: root
+    group: root
 
 - name: Make sure public keys are set present at user 'root'
   ansible.posix.authorized_key:
@@ -58,13 +69,14 @@
     - public_keys/apollo-tycho-id_ed25519.pub 
     - public_keys/freya-tycho-id_ed25519.pub
     - public_keys/M2729-doctert-id_rsa.pub
+    - public_keys/heimdall-ansible-id_ed25519.pub
   loop_control:
     loop_var: pubkey_item
 
 - name: Ensure root ssh login is not possible
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    regexp: '^#PermitRootLogin'
+    regexp: '^PermitRootLogin'
     line: PermitRootLogin no
 
 - name: Ensure ssh login with key is possible
